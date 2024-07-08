@@ -28,7 +28,9 @@ def format_data_for_openai(diffs, readme_content, commit_messages):
         "Consider the code changes and commit messages, determine if the README needs to be updated. If so, edit the README, ensuring to maintain its existing style and clarity.\n"
         "Updated README:\n"
     )
-    print( prompt )
+    print( "-----------------------------------")
+    print( changes )
+    print( "-----------------------------------")
     return prompt
 
 
