@@ -1,49 +1,58 @@
 import os
 import base64
-
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
+
 def format_data_for_openai(diffs, readme_content, commit_messages):
     # Combine the changes into a string with clear delineation.
-    changes = "\n".join([f"File: #{file['filename']}\nDiff:\n{file['patch']}\n"] for file in diffs)
+    changes = "\n".join(
+        [f'File: {file["filename"]}\nDiff: \n{file["patch"]}\n' for file in diffs]
+    )
 
     # Combine all commit messages
-    commit_messages = "\n".join(commit_messages)+"\n\n"
+    commit_messages = "\n".join(commit_messages) + "\n\n"
 
     # Decode the README content
     readme_content = base64.b64decode(readme_content.content).decode("utf-8")
 
     # Construct the prompt with clear instructions for the LLM.
     prompt = (
-            "Please review the following code changes and commit messages from a Github request:\n"
-            "Code changes from Pull Request: \n"
-            f"{changes}\n"
-            "Commit Messages: \n"
-            f"{commit_messages}\n"
-            "Here is the current README file content:\n"
-            f"{readme_content}\n"
-            "Consider the code changes and commit messages, and determine if the README needs to be updated. If so, edit the README, ensuring to maintain it's existing style and clarity.\n"
-            "Updated README: \n"
+        "Please review the following code changes and commit messages from a GitHub pull request:\n"
+        "Code changes from Pull Request:\n"
+        f"{changes}\n"
+        "Commit messages:\n"
+        f"{commit_messages}"
+        "Here is the current README file content:\n"
+        f"{readme_content}\n"
+        "Consider the code changes and commit messages, determine if the README needs to be updated. If so, edit the README, ensuring to maintain its existing style and clarity.\n"
+        "Updated README:\n"
     )
 
     return prompt
 
+
 def call_openai(prompt):
-    client -ChatOpenAI( api_key=os.getenv()("OPENAI_API_KEY"), temperature=0.7)
+    client = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     try:
-        message= [
-            {"role": "system", "content": "You are an AI trained to help with updating README files based on code changes and commit messages."},
-            {"role": "user", "content": prompt}
+        # Construct the chat messages for the conversation
+        messages = [
+            {
+                "role": "system",
+                "content": "You are an AI trained to help with updating README files based on code changes.",
+            },
+            {"role": "user", "content": prompt},
         ]
 
-        response = client.invoke(input=message)
+        # Make the API call to OpenAI chat interface
+        response = client.invoke(input=messages)
         parser = StrOutputParser()
-        content = parser.invoke( input=response )
+        content = parser.invoke(input=response)
+
         return content
     except Exception as e:
-        print(f"Error making openai api call: {e}")
-        return None
+        print(f"Error making OpenAI API call: {e}")
+
 
 def update_readme_and_create_pr(repo, updated_readme, readme_sha):
     """
