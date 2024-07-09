@@ -1,6 +1,7 @@
 from langchain.vectorstores import Pinecone
 from langchain_openai import OpenAIEmbeddings
 
+
 class VectorStore:
     def __init__(self, index_name ):
         self._index_name = index_name
@@ -8,6 +9,11 @@ class VectorStore:
 
     def add_vector(self, to_add):
         Pinecone.from_documents(to_add, self._embeddings, index_name=self._index_name)
+
+    def clear_index(self):
+        pinecone = Pinecone.from_existing_index(self._index_name, self._embeddings)
+        if pinecone is not None:
+            pinecone.delete(delete_all=True)
 
     def fetch_context(self, prompt):
         document_vectorstore = Pinecone.from_existing_index( index_name=self._index_name, embedding=self._embeddings)

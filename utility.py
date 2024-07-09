@@ -33,11 +33,11 @@ def format_data_for_openai(diffs, readme_content, commit_messages):
     return prompt
 
 
-def call_openai(prompt, context):
+def call_openai(prompt, context, type="pull requests"):
     client = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     prompt_template = ChatPromptTemplate.from_messages([
         SystemMessage(content="You are an AI trained to help with updating README files based on code changes."),
-        HumanMessage(content=f"Here's the context of the pull requests: {context}\n\n{prompt}")
+        HumanMessage(content=f"Here's the context of the {type}: {context}\n\n{prompt}")
     ])
     try:
         prompt = prompt_template.format_messages(context=context)
@@ -80,6 +80,14 @@ def update_readme_and_create_pr(repo, updated_readme, readme_sha):
     )
 
     return pull_request
+
+def code_base_summary( vector_store ):
+    pulling_prompt = f"Please summarize the entire code base as human readable text between five and ten sentences long."
+    prompt = ( f"{pulling_prompt}  Don't describe the individual files but rather the system as a whole. "
+               "Try to make it clear and concise and like it was written by a human rather than 'The code base contains...'."
+               )
+    context = vector_store.fetch_context(prompt)
+    return call_openai(pulling_prompt, context, "code base")
 
 def last_five_pr_summary( pull_request_number, vector_store ):
     pulling_prompt = f"Please summarize pull request {generate_pr_string( pull_request_number )} as human readable text of 3 sentences each."
