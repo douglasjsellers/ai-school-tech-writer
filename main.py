@@ -29,7 +29,7 @@ def main():
     pr_summary = last_five_pr_summary( pull_request_number, changes_vector_store )
     readme_content = repo.get_contents("README.md")
 
-    updated_readme = f"# AI for Developer Productivity: Technical Writer Agent\n##Project Summary\n{project_summary}\n\n##Recent Changes\n{pr_summary}"
+    updated_readme = f"# AI for Developer Productivity: Technical Writer Agent\n## Project Summary\n\n{project_summary}\n\n## Recent Changes\n\n{pr_summary}"
     print( updated_readme )
     update_readme_and_create_pr(repo, updated_readme, readme_content.sha)
 
