@@ -2,6 +2,8 @@ import os
 import base64
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
 
 
 def format_data_for_openai(diffs, readme_content, commit_messages):
@@ -31,20 +33,16 @@ def format_data_for_openai(diffs, readme_content, commit_messages):
     return prompt
 
 
-def call_openai(prompt):
+def call_openai(prompt, context, type="pull requests"):
     client = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    prompt_template = ChatPromptTemplate.from_messages([
+        SystemMessage(content="You are an AI trained to help with updating README files based on code changes."),
+        HumanMessage(content=f"Here's the context of the {type}: {context}\n\n{prompt}")
+    ])
     try:
-        # Construct the chat messages for the conversation
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an AI trained to help with updating README files based on code changes.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-
+        prompt = prompt_template.format_messages(context=context)
         # Make the API call to OpenAI chat interface
-        response = client.invoke(input=messages)
+        response = client.invoke(input=prompt)
         parser = StrOutputParser()
         content = parser.invoke(input=response)
 
@@ -82,3 +80,29 @@ def update_readme_and_create_pr(repo, updated_readme, readme_sha):
     )
 
     return pull_request
+
+def code_base_summary( vector_store ):
+    pulling_prompt = f"Please summarize the entire code base as human readable text between five and ten sentences long."
+    prompt = ( f"{pulling_prompt}  Don't describe the individual files but rather the system as a whole. "
+               "Try to make it clear and concise and like it was written by a human rather than 'The code base contains...'."
+               )
+    context = vector_store.fetch_context(prompt)
+    return call_openai(pulling_prompt, context, "code base")
+
+def last_five_pr_summary( pull_request_number, vector_store ):
+    pulling_prompt = f"Please summarize pull request {generate_pr_string( pull_request_number )} as human readable text of 3 sentences each."
+    # Format data for OpenAI prompt
+    prompt = ( f"{pulling_prompt}  Please return them as an ordered list. "
+               "When formatted the output rather than saying something like 'Pull Request 10' say 'PR #10: '."
+               )
+    context = vector_store.fetch_context(pulling_prompt)
+    return call_openai(prompt, context)
+
+def generate_pr_string(current_pr_number, count=5):
+    numbers = range(current_pr_number, current_pr_number - count, -1)
+    number_strings = [str(num) for num in numbers]
+
+    if len(number_strings) > 1:
+        return ", ".join(number_strings[:-1]) + f", and {number_strings[-1]}"
+    else:
+        return number_strings[0]

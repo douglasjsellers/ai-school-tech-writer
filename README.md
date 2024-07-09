@@ -12,6 +12,4 @@ Based on the code changes and commit messages provided in the GitHub pull reques
 
 5. The `update_readme_and_create_pr` function is not explicitly modified in the provided code changes.
 
-Based on the provided information, it seems that the README file may need an update to include information about using ChatGPT 3.5 as the model to generate READMEs. This update should be made in accordance with the existing style and clarity of the README content.
-
-If you have any specific changes or updates you would like to make to the README file based on these code changes, please let me know so I can assist you further.
+## Starting Test
