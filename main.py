@@ -22,7 +22,7 @@ def main():
     repo = g.get_repo(repo_path)
     pull_request = repo.get_pull(pull_request_number)
     vector = PullRequestVector(pull_request, pull_request_number)
-    changes_vector_store = VectorStore( os.getenv( 'PINECONE_INDEX_CHANGES'))
+    changes_vector_store = VectorStore( 'ai-school-tech-writer-changes' )
 
     changes_vector_store.add_vector(vector.vectorize())
 
