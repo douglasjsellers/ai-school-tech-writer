@@ -2,6 +2,8 @@ import os
 import base64
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
 
 
 def format_data_for_openai(diffs, readme_content, commit_messages):
@@ -31,20 +33,16 @@ def format_data_for_openai(diffs, readme_content, commit_messages):
     return prompt
 
 
-def call_openai(prompt):
+def call_openai(prompt, context):
     client = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    prompt_template = ChatPromptTemplate.from_messages([
+        SystemMessage(content="You are an AI trained to help with updating README files based on code changes."),
+        HumanMessage(content=f"Here's the context of the pull requests: {context}\n\n{prompt}")
+    ])
     try:
-        # Construct the chat messages for the conversation
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an AI trained to help with updating README files based on code changes.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-
+        prompt = prompt_template.format_messages(context=context)
         # Make the API call to OpenAI chat interface
-        response = client.invoke(input=messages)
+        response = client.invoke(input=prompt)
         parser = StrOutputParser()
         content = parser.invoke(input=response)
 
