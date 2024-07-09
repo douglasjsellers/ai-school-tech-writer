@@ -80,3 +80,21 @@ def update_readme_and_create_pr(repo, updated_readme, readme_sha):
     )
 
     return pull_request
+
+def last_five_pr_summary( pull_request_number, vector_store ):
+    pulling_prompt = f"Please summarize pull request {generate_pr_string( pull_request_number )} as human readable text of 3 sentences each."
+    # Format data for OpenAI prompt
+    prompt = ( f"{pulling_prompt}  Please return them as an ordered list. "
+               "When formatted the output rather than saying something like 'Pull Request 10' say 'PR #10: '."
+               )
+    context = vector_store.fetch_context(pulling_prompt)
+    return call_openai(prompt, context)
+
+def generate_pr_string(current_pr_number, count=5):
+    numbers = range(current_pr_number, current_pr_number - count, -1)
+    number_strings = [str(num) for num in numbers]
+
+    if len(number_strings) > 1:
+        return ", ".join(number_strings[:-1]) + f", and {number_strings[-1]}"
+    else:
+        return number_strings[0]
